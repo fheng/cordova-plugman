@@ -8,6 +8,7 @@ var npm = require('npm'),
     os = require('os'),
     rc = require('rc'),
     Q = require('q'),
+    shell = require('shelljs'),
     home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE,
     plugmanConfigDir = path.resolve(home, '.plugman'),
     plugmanCacheDir = path.resolve(plugmanConfigDir, 'cache');
