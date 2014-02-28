@@ -27,45 +27,37 @@ var http = require('http'),
     Q = require('q'),
     xml_helpers = require('./xml-helpers');
 
+function getCacheFolderName(plugin_git_url, git_ref, subdir){
+    var urlTohash = plugin_git_url + "#" + git_ref;
+    if(subdir){
+        urlTohash += ":" + subdir;
+    }
+    return require('crypto').createHash('md5').update(urlTohash).digest("hex");
+}
+
 module.exports = {
     searchAndReplace:require('./search-and-replace'),
 
     // Fetches plugin information from remote server.
     // Returns a promise.
-    clonePluginGitRepo:function(plugin_git_url, plugins_dir, subdir, git_ref) {
+    clonePluginGitRepo:function(plugin_git_url, plugins_dir, subdir, git_ref, cache_dir) {
         if(!shell.which('git')) {
             return Q.reject(new Error('"git" command line tool is not installed: make sure it is accessible on your PATH.'));
         }
         var tmp_dir = path.join(os.tmpdir(), 'plugman-tmp' +(new Date).valueOf());
-
-        shell.rm('-rf', tmp_dir);
-
-        var cmd = util.format('git clone "%s" "%s"', plugin_git_url, tmp_dir);
-        require('../../plugman').emit('verbose', 'Fetching plugin via git-clone command: ' + cmd);
-        var d = Q.defer();
-
-        child_process.exec(cmd, function(err, stdout, stderr) {
-            if (err) {
-                d.reject(err);
-            } else {
-                d.resolve();
+        var cached = false;
+        if(cache_dir){
+            var folderName = getCacheFolderName(plugin_git_url, git_ref, subdir);
+            //set the tmp_dir to be the cache dir
+            tmp_dir = path.join(cache_dir, folderName);
+            var cachedXml = path.join(cache_dir, folderName, subdir, "plugin.xml");
+            if(fs.existsSync(cachedXml)){
+                //we have a cached version of the plugin, no need to download and checkout again
+                cached = true;
             }
-        });
-        return d.promise.then(function() {
-            require('../../plugman').emit('verbose', 'Plugin "' + plugin_git_url + '" fetched.');
-            // Check out the specified revision, if provided.
-            if (git_ref) {
-                var cmd = util.format('git checkout "%s"', git_ref);
-                var d2 = Q.defer();
-                child_process.exec(cmd, { cwd: tmp_dir }, function(err, stdout, stderr) {
-                    if (err) d2.reject(err);
-                    else d2.resolve();
-                });
-                return d2.promise.then(function() {
-                    require('../../plugman').emit('log', 'Plugin "' + plugin_git_url + '" checked out to git ref "' + git_ref + '".');
-                });
-            }
-        }).then(function() {
+        }
+
+        var copyPlugin = function(){
             // Read the plugin.xml file and extract the plugin's ID.
             tmp_dir = path.join(tmp_dir, subdir);
             // TODO: what if plugin.xml does not exist?
@@ -81,7 +73,45 @@ module.exports = {
 
             require('../../plugman').emit('verbose', 'Plugin "' + plugin_id + '" fetched.');
             return plugin_dir;
-        });
+        }
+
+        if(cached){
+            require('../../plugman').emit('verbose', 'found cached version for plugin: ' + plugin_git_url + "#" + git_ref + " @ " + tmp_dir);
+            return Q().then(function(){
+                return copyPlugin();
+            });
+        } else {
+            shell.rm('-rf', tmp_dir);
+
+            var cmd = util.format('git clone "%s" "%s"', plugin_git_url, tmp_dir);
+            require('../../plugman').emit('verbose', 'Fetching plugin via git-clone command: ' + cmd);
+            var d = Q.defer();
+
+            child_process.exec(cmd, function(err, stdout, stderr) {
+                if (err) {
+                    d.reject(err);
+                } else {
+                    d.resolve();
+                }
+            });
+            return d.promise.then(function() {
+                require('../../plugman').emit('verbose', 'Plugin "' + plugin_git_url + '" fetched.');
+                // Check out the specified revision, if provided.
+                if (git_ref) {
+                    var cmd = util.format('git checkout "%s"', git_ref);
+                    var d2 = Q.defer();
+                    child_process.exec(cmd, { cwd: tmp_dir }, function(err, stdout, stderr) {
+                        if (err) d2.reject(err);
+                        else d2.resolve();
+                    });
+                    return d2.promise.then(function() {
+                        require('../../plugman').emit('log', 'Plugin "' + plugin_git_url + '" checked out to git ref "' + git_ref + '".');
+                    });
+                }
+            }).then(function() {
+                return copyPlugin();
+            });
+        }
     },
 
     // List the directories in the path, ignoring any files, .svn, etc.

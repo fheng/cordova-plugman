@@ -22,7 +22,13 @@ function getPackageInfo(args) {
         name = thing.shift(),
         version = thing.join("@") || 'latest';
     var settings = module.exports.settings;
-
+    //check if the package is already cached, if so, do not make a request to the registry
+    if(settings.cache && fs.existsSync(settings.cache)){
+      var cached = path.resolve(settings.cache, name, version, 'package');
+      if(fs.existsSync(cached)){
+        return {name: name, version: version};
+      }
+    }
     var d = Q.defer();
     http.get(settings.registry + '/' + name + '/' + version, function(res) {
          if(res.statusCode != 200) {
@@ -55,7 +61,14 @@ function fetchPackage(info, cl) {
         d.resolve(cached);
     } else {
         var target = path.join(os.tmpdir(), info.name);
-        var filename = target + '.tgz';
+        var filename = target + '-' + info.version + '.tgz';
+        //cache the package
+        if(settings.cache && fs.existsSync(settings.cache)){
+          var download_dir = path.join(settings.cache, info.name, info.version);
+          target = download_dir;
+          shell.mkdir('-p', download_dir);
+        }
+        
         var filestream = fs.createWriteStream(filename);
         var request = http.get(info.dist.tarball, function(res) {
             if(res.statusCode != 200) {
