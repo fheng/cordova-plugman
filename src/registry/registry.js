@@ -63,7 +63,7 @@ function fetchPackage(info, cl) {
         d.resolve(cached);
     } else {
         var target = path.join(os.tmpdir(), info.name);
-        var filename = target + '-' + info.version + (new Date).valueOf() + '.tgz'; //appending timestamp to avoid conflicts
+        var filename = target + '-' + info.version + '-' + (new Date).valueOf() + '.tgz'; //appending timestamp to avoid conflicts
         //cache the package
         if(settings.cache && fs.existsSync(settings.cache)){
           var download_dir = path.join(settings.cache, info.name, info.version);
