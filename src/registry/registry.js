@@ -24,13 +24,14 @@ function getPackageInfo(args) {
         version = thing.join("@") || 'latest';
     var settings = module.exports.settings;
     //check if the package is already cached, if so, do not make a request to the registry
+    var d = Q.defer();
     if(settings.cache && fs.existsSync(settings.cache)){
       var cached = path.resolve(settings.cache, name, version, 'package');
       if(fs.existsSync(cached)){
-        return {name: name, version: version};
+        d.resolve({name: name, version: version});
       }
     }
-    var d = Q.defer();
+    
     http.get(settings.registry + '/' + name + '/' + version, function(res) {
          if(res.statusCode != 200) {
              d.reject(new Error('Failed to fetch package information for '+name));
