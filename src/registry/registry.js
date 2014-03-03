@@ -63,12 +63,13 @@ function fetchPackage(info, cl) {
         d.resolve(cached);
     } else {
         var target = path.join(os.tmpdir(), info.name);
-        var filename = target + '-' + info.version + '.tgz';
+        var filename = target + '-' + info.version + (new Date).valueOf() + '.tgz'; //appending timestamp to avoid conflicts
         //cache the package
         if(settings.cache && fs.existsSync(settings.cache)){
           var download_dir = path.join(settings.cache, info.name, info.version);
           target = download_dir;
           shell.mkdir('-p', download_dir);
+          shell.chmod('755', download_dir);
         }
         
         var filestream = fs.createWriteStream(filename);
@@ -105,7 +106,10 @@ function fetchPackage(info, cl) {
                 filestream.on('finish', function() {
                     var decompress = new targz().extract(filename, target, function(err) {
                         if (err) d.reject(err);
-                        else d.resolve(path.resolve(target, 'package'));
+                        else {
+                          shell.rm('-rf', filename); //delete the tmp file at the end
+                          d.resolve(path.resolve(target, 'package'));
+                        }
                     });
                 });
             }
