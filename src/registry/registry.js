@@ -69,7 +69,8 @@ function fetchPackage(info, cl) {
           var download_dir = path.join(settings.cache, info.name, info.version);
           target = download_dir;
           shell.mkdir('-p', download_dir);
-          shell.chmod('755', download_dir);
+          //make sure the download dir is writeable by the group
+          shell.chmod('775', download_dir);
         }
         
         var filestream = fs.createWriteStream(filename);
