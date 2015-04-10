@@ -21,6 +21,41 @@
 
 # Cordova-plugman Release Notes
 
+### 0.23.0 (Feb 27, 2015)
+* CB-8416 added `plugman createpackagejson .` command to generate a package.json file from plugin.xml
+* CB-8370 Update documentation for `plugman publish` without args
+
+### 0.22.17 (Jan 06, 2015)
+* fixing broken link to chrome plugins
+
+### 0.22.16 (Nov 13, 2014)
+* CB-7079 Allow special characters and digits in id when publishing to plugins registry
+* Update dependencies in package.json
+
+### 0.22.12 (Oct 10, 2014)
+* Pinned dependencies
+* CB-7383 Updated version and RELEASENOTES.md for release 0.22.10
+* update versions of self and dependencies after 3.6
+* CB-7383 Incremented package version to -dev
+
+### 0.22.10
+* remove shrinkwrap
+
+### 0.22.9
+CB-7383: depend on a newer version of cordova-lib
+
+### 0.22.8
+* bump version to 0.22.8
+
+### 0.22.7 (Sep 05, 2014)
+* updated Release notes
+* updated version to 0.22.7-dev
+
+### 0.22.5 (Aug 29, 2014)
+* CB-7363 Do not insist on precise version of cordova-lib
+* CB-7362 Add Please run npm install from this directory code
+* Remove package.json:scripts.test
+
 ### 0.22.4 (June 23, 2014)
 * wp7 is dead, long live wp7
 
@@ -175,4 +210,3 @@
 - `plugin rm` now doesn't choke when a file is already deleted
 - Fixed some trouble with filesystem paths vs. web paths; improves Windows host support.
 - Projects beginning with `x`, `y`, and `z` now work. [CB-4502](https://issues.apache.org/jira/browse/CB-4502)
-
